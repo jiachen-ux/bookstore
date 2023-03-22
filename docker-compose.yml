@@ -1,11 +1,13 @@
-version: '2.4'
+version: '2'
 
 services:
   api:
     image: node:alpine
+    restart: always
     working_dir: /app
     volumes:
       - .:/app
+      - ./log:/root/.npm/_logs/
     ports:
       - 3000:3000
     depends_on:
@@ -15,26 +17,38 @@ services:
     cpus: 0.5
     mem_limit: 50m
     mem_reservation: 25m
-    command: sh -c "sleep 20 && npm install && npm run start"
+    # command: sh -c "sleep 10000"
+    command: sh -c "npm config set registry https://registry.npm.taobao.org && npm info underscore  && npm install && npm run start"
+    hostname: api
 
   db:
-    image: mongo:4
+    image: mongo:3.4
+    restart: always
+    command: [--auth]
     environment:
       - MONGO_INITDB_ROOT_USERNAME=admin
       - MONGO_INITDB_ROOT_PASSWORD=12345678
+      - MONGO_INITDB_DATABASE=booksdb
+      - MONGO_USERNAME=test
+      - MONGO_PASSWORD=test
     volumes:
       - dbdata:/data/db
+      # - ./mongo/init/:/docker-entrypoint-initdb.d/
     mem_limit: 50m
     mem_reservation: 25m
+    ports:
+      - 27017:27017
     networks:
       - backend
+    hostname: db
 
-  db-seed:
-    build: ./data
-    networks:
-      - backend
-    depends_on:
-      - db
+  # db-seed:
+  #   build: ./mongo/data
+  #   networks:
+  #     - backend
+  #   depends_on:
+  #     - db
+  #   hostname: db-seed
 
 networks:
   backend:
